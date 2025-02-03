@@ -7,13 +7,17 @@ import pywhatkit
 listener = sr.Recognizer()
 player = pyttsx3.init()
 
+# Adjust speaking rate (slower speed)
+rate = player.getProperty('rate')  # Get the current speaking rate
+player.setProperty('rate', rate - 50)  # Reduce the rate to make it slower
 
 def listen():
     """Capture voice input and convert it to text."""
     with sr.Microphone() as input_device:
         print("I am ready, Listening ....")
         try:
-            voice_content = listener.listen(input_device)
+            # Set a timeout and adjust the phrase limit to avoid cutting off early
+            voice_content = listener.listen(input_device, timeout=10, phrase_time_limit=5)
             text_command = listener.recognize_google(voice_content).lower()
             print(f"User said: {text_command}")
             return text_command
@@ -49,22 +53,33 @@ def get_summary(command):
 
 def run_voice_bot():
     """Main function to process voice commands."""
-    command = listen()
+    while True:
+        command = listen()
 
-    if command and "sunny" in command:
-        command = command.replace("sunny", "").strip()
+        if command:
+            if "stop" in command:
+                talk("You requested quitting, I'm exiting now.")
+                print("You requested quitting, I'm exiting now.")
+                break
 
-        if "what is" in command or "who is" in command:
-            command = command.replace("what is", "").replace("who is", "").strip()
-            info = get_summary(command)
-            talk(info)
-        elif "play" in command:
-            command = command.replace("play", "").strip()
-            talk(f"Playing {command} on YouTube")
-            pywhatkit.playonyt(command)
-        else:
-            talk("Sorry, I am unable to find what you are looking for.")
+            if "sunny" in command:
+                command = command.replace("sunny", "").strip()
+
+                if "what is" in command or "who is" in command:
+                    command = command.replace("what is", "").replace("who is", "").strip()
+                    info = get_summary(command)
+                    talk(info)
+                elif "play" in command:
+                    command = command.replace("play", "").strip()
+                    talk(f"Playing {command} on YouTube")
+                    pywhatkit.playonyt(command)
+                else:
+                    talk("Sorry, I am unable to find what you are looking for.")
 
 
 # Run the voice assistant
-run_voice_bot()
+try:
+    run_voice_bot()
+except KeyboardInterrupt:
+    talk("You requested quitting, I'm exiting now.")
+    print("You requested quitting, I'm exiting now.")
